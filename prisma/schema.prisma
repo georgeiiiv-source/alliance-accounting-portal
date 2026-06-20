@@ -125,6 +125,7 @@ model VerificationToken {
   token String
   expires DateTime
   @@unique([identifier, token])
+  @@index([expires])
 }
 
 model ClientProfile {
@@ -168,6 +169,7 @@ model DocumentRequest {
   completedAt DateTime?
   client User @relation("ClientDocumentRequests", fields: [clientId], references: [id], onDelete: Cascade)
   requestedBy User @relation("DocumentRequestedBy", fields: [requestedById], references: [id])
+  @@index([clientId, completedAt])
 }
 
 model TaxReturn {
@@ -202,6 +204,7 @@ model MessageThread {
   updatedAt DateTime @updatedAt
   client User @relation("ClientThreads", fields: [clientId], references: [id], onDelete: Cascade)
   messages Message[]
+  @@index([clientId, updatedAt(sort: Desc)])
 }
 
 model Message {
@@ -214,6 +217,8 @@ model Message {
   thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   sender User @relation(fields: [senderId], references: [id])
   attachments MessageAttachment[]
+  @@index([threadId, createdAt])
+  @@index([senderId, readAt])
 }
 
 model MessageAttachment {
@@ -237,6 +242,7 @@ model Invoice {
   paidAt DateTime?
   createdAt DateTime @default(now())
   client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  @@index([clientId, status])
 }
 
 model ClientTask {
@@ -248,6 +254,7 @@ model ClientTask {
   createdById String
   client User @relation("ClientTasks", fields: [clientId], references: [id], onDelete: Cascade)
   createdBy User @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  @@index([clientId, completedAt, dueAt])
 }
 
 model InternalNote {
@@ -285,6 +292,7 @@ model ServiceRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  @@index([clientId, status, createdAt(sort: Desc)])
 }
 
 model LeadInquiry {

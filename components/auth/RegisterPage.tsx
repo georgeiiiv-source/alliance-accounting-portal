@@ -1,3 +1,20 @@
 "use client";
-import { useState } from "react";import Link from "next/link";import { ArrowRight, ShieldCheck } from "lucide-react";import { Logo } from "@/components/layout/Logo";
-export function RegisterPage(){const[message,setMessage]=useState('');async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const form=new FormData(e.currentTarget);if(form.get('password')!==form.get('confirm')){setMessage('Passwords do not match.');return}const res=await fetch('/api/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.fromEntries(form))});const body=await res.json();setMessage(res.ok?'Account created. Check your email to verify your address before signing in.':body.error)}return <div className="login-page"><div className="login-side"><Logo light/><div><div className="eyebrow light"><span/> SECURE ONBOARDING</div><h1>Start your Alliance<br/><em>client relationship.</em></h1><p>Create an account, verify your email, and complete your secure profile.</p></div><div className="login-security"><ShieldCheck/><span><b>Privacy by design</b><small>Least-privilege access · Encrypted records · Complete audit trail</small></span></div></div><div className="login-form"><div className="form-wrap"><h2>Create your account</h2><p>Use a unique password with at least 12 characters.</p><form onSubmit={submit}><label>Full name<input name="name" required minLength={2}/></label><label>Email address<input name="email" required type="email"/></label><label>Password<input name="password" required type="password" minLength={12}/></label><label>Confirm password<input name="confirm" required type="password" minLength={12}/></label><button className="btn">Create secure account <ArrowRight/></button></form>{message&&<p role="status">{message}</p>}<div className="switch">Already registered? <Link href="/login">Sign in</Link></div></div></div></div>}
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/layout/Logo";
+
+export function RegisterPage() {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSending(true); setMessage("");
+    const form = new FormData(event.currentTarget);
+    if (form.get("password") !== form.get("confirm")) { setMessage("Passwords do not match."); setSending(false); return; }
+    const response = await fetch("/api/auth/register", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
+    const body = await response.json();
+    setMessage(response.ok ? body.emailDelivered ? "Account created. Check your email to verify your address." : "Account created, but email delivery is not configured. Contact the firm administrator." : body.error);
+    setSending(false);
+  }
+  return <div className="login-page"><div className="login-side"><Logo light/><div><div className="eyebrow light"><span/> SECURE ONBOARDING</div><h1>Start your Alliance<br/><em>client relationship.</em></h1><p>Create an account, verify your email, and complete your secure profile.</p></div><div className="login-security"><ShieldCheck/><span><b>Privacy by design</b><small>Least-privilege access · Encrypted records · Complete audit trail</small></span></div></div><div className="login-form"><div className="form-wrap"><h2>Create your account</h2><p>Use a unique password with at least 12 characters.</p><form onSubmit={submit}><label>Full name<input name="name" required minLength={2}/></label><label>Email address<input name="email" required type="email"/></label><label>Password<input name="password" required type="password" minLength={12}/></label><label>Confirm password<input name="confirm" required type="password" minLength={12}/></label><button className="btn" disabled={sending}>{sending?"Creating…":"Create secure account"} <ArrowRight/></button></form>{message&&<p role="status">{message}</p>}<div className="switch">Already registered? <Link href="/login">Sign in</Link></div></div></div></div>;
+}
