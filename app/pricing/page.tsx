@@ -1,0 +1,1 @@
+import { MarketingShell } from "@/components/layout/MarketingShell";import { PricingPage } from "@/components/marketing/PricingPage";export default function Page(){return <MarketingShell><PricingPage/></MarketingShell>}

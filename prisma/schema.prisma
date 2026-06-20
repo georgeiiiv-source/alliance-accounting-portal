@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  STAFF
+  ADMIN
+}
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  OVERDUE
+  REFUNDED
+}
+enum MessageStatus {
+  OPEN
+  PENDING
+  RESOLVED
+}
+enum ScanStatus {
+  PENDING
+  CLEAN
+  QUARANTINED
+  REJECTED
+}
+enum ServiceRequestStatus {
+  NEW
+  IN_PROGRESS
+  WAITING
+  COMPLETED
+  CANCELLED
+}
+enum AuthorizationForm {
+  FORM_8821
+  FORM_2848
+}
+enum TaxReturnStatus {
+  CLIENT_REGISTERED
+  ENGAGEMENT_LETTER_SENT
+  ENGAGEMENT_LETTER_SIGNED
+  DOCUMENTS_REQUESTED
+  DOCUMENTS_RECEIVED
+  IN_REVIEW
+  MISSING_INFORMATION_REQUESTED
+  TAX_RETURN_BEING_PREPARED
+  INTERNAL_QUALITY_REVIEW
+  CLIENT_REVIEW
+  ESIGNATURE_REQUESTED
+  EFILE_SUBMITTED
+  IRS_ACCEPTED
+  STATE_ACCEPTED
+  COMPLETED
+  ARCHIVED
+}
+
+model User {
+  id String @id @default(cuid())
+  name String?
+  email String @unique
+  emailVerified DateTime?
+  image String?
+  passwordHash String?
+  role UserRole @default(CLIENT)
+  mfaEnabled Boolean @default(false)
+  mfaSecretEncrypted Bytes?
+  lastLoginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  accounts Account[]
+  sessions Session[]
+  profile ClientProfile?
+  assignedClients ClientProfile[] @relation("AssignedStaff")
+  uploadedDocuments Document[] @relation("UploadedBy")
+  ownedDocuments Document[] @relation("ClientDocuments")
+  requestedDocuments DocumentRequest[] @relation("DocumentRequestedBy")
+  documentRequests DocumentRequest[] @relation("ClientDocumentRequests")
+  taxReturns TaxReturn[] @relation("ClientTaxReturns")
+  taxUpdates TaxStatusEvent[] @relation("StatusUpdatedBy")
+  messageThreads MessageThread[] @relation("ClientThreads")
+  messages Message[]
+  invoices Invoice[]
+  tasks ClientTask[] @relation("ClientTasks")
+  createdTasks ClientTask[] @relation("TaskCreatedBy")
+  internalNotes InternalNote[] @relation("ClientNotes")
+  authoredNotes InternalNote[] @relation("NoteAuthor")
+  authorizations IrsAuthorization[] @relation("ClientAuthorizations")
+  verifiedAuthorizations IrsAuthorization[] @relation("AuthorizationVerifier")
+  serviceRequests ServiceRequest[]
+  auditEvents AuditLog[] @relation("AuditActor")
+  clientAuditEvents AuditLog[] @relation("AuditClient")
+}
+
+model Account {
+  id String @id @default(cuid())
+  userId String
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String?
+  access_token String?
+  expires_at Int?
+  token_type String?
+  scope String?
+  id_token String?
+  session_state String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String @unique
+  userId String
+  expires DateTime
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token String
+  expires DateTime
+  @@unique([identifier, token])
+}
+
+model ClientProfile {
+  id String @id @default(cuid())
+  userId String @unique
+  fullName String
+  phone String?
+  addressEncrypted Bytes?
+  taxYear Int?
+  filingType String?
+  assignedStaffId String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedStaff User? @relation("AssignedStaff", fields: [assignedStaffId], references: [id])
+}
+
+model Document {
+  id String @id @default(cuid())
+  clientId String
+  uploadedById String
+  category String
+  displayName String
+  storageKey String @unique
+  mimeType String
+  byteSize BigInt
+  scanStatus ScanStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  client User @relation("ClientDocuments", fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation("UploadedBy", fields: [uploadedById], references: [id])
+  messageAttachments MessageAttachment[]
+  authorizations IrsAuthorization[]
+  @@index([clientId, createdAt(sort: Desc)])
+}
+
+model DocumentRequest {
+  id String @id @default(cuid())
+  clientId String
+  requestedById String
+  category String?
+  note String?
+  dueAt DateTime?
+  completedAt DateTime?
+  client User @relation("ClientDocumentRequests", fields: [clientId], references: [id], onDelete: Cascade)
+  requestedBy User @relation("DocumentRequestedBy", fields: [requestedById], references: [id])
+}
+
+model TaxReturn {
+  id String @id @default(cuid())
+  clientId String
+  taxYear Int
+  filingType String?
+  status TaxReturnStatus @default(CLIENT_REGISTERED)
+  statusUpdatedAt DateTime @default(now())
+  client User @relation("ClientTaxReturns", fields: [clientId], references: [id], onDelete: Cascade)
+  events TaxStatusEvent[]
+  @@unique([clientId, taxYear])
+}
+
+model TaxStatusEvent {
+  id String @id @default(cuid())
+  taxReturnId String
+  status TaxReturnStatus
+  note String?
+  createdById String
+  createdAt DateTime @default(now())
+  taxReturn TaxReturn @relation(fields: [taxReturnId], references: [id], onDelete: Cascade)
+  createdBy User @relation("StatusUpdatedBy", fields: [createdById], references: [id])
+}
+
+model MessageThread {
+  id String @id @default(cuid())
+  clientId String
+  subject String
+  status MessageStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client User @relation("ClientThreads", fields: [clientId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+model Message {
+  id String @id @default(cuid())
+  threadId String
+  senderId String
+  bodyEncrypted Bytes
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id])
+  attachments MessageAttachment[]
+}
+
+model MessageAttachment {
+  messageId String
+  documentId String
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  @@id([messageId, documentId])
+}
+
+model Invoice {
+  id String @id @default(cuid())
+  clientId String
+  number String @unique
+  description String
+  amountCents Int
+  currency String @default("USD")
+  status InvoiceStatus @default(UNPAID)
+  stripePaymentIntentId String?
+  dueAt DateTime?
+  paidAt DateTime?
+  createdAt DateTime @default(now())
+  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model ClientTask {
+  id String @id @default(cuid())
+  clientId String
+  title String
+  dueAt DateTime?
+  completedAt DateTime?
+  createdById String
+  client User @relation("ClientTasks", fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy User @relation("TaskCreatedBy", fields: [createdById], references: [id])
+}
+
+model InternalNote {
+  id String @id @default(cuid())
+  clientId String
+  authorId String
+  bodyEncrypted Bytes
+  createdAt DateTime @default(now())
+  client User @relation("ClientNotes", fields: [clientId], references: [id], onDelete: Cascade)
+  author User @relation("NoteAuthor", fields: [authorId], references: [id])
+}
+
+model IrsAuthorization {
+  id String @id @default(cuid())
+  clientId String
+  formType AuthorizationForm
+  documentId String
+  verifiedById String?
+  verifiedAt DateTime?
+  expiresAt DateTime?
+  requestReference String?
+  statusNote String?
+  createdAt DateTime @default(now())
+  client User @relation("ClientAuthorizations", fields: [clientId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id])
+  verifiedBy User? @relation("AuthorizationVerifier", fields: [verifiedById], references: [id])
+}
+
+model ServiceRequest {
+  id String @id @default(cuid())
+  clientId String
+  kind String
+  detailsEncrypted Bytes?
+  status ServiceRequestStatus @default(NEW)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model LeadInquiry {
+  id String @id @default(cuid())
+  name String
+  email String
+  kind String
+  details String
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id BigInt @id @default(autoincrement())
+  actorId String?
+  clientId String?
+  action String
+  entityType String?
+  entityId String?
+  ipHash String?
+  userAgent String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+  client User? @relation("AuditClient", fields: [clientId], references: [id])
+  @@index([clientId, createdAt(sort: Desc)])
+}

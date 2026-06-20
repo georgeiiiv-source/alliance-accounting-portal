@@ -1,0 +1,1 @@
+import { ForgotPasswordPage } from "@/components/auth/ForgotPasswordPage";export default async function Page({searchParams}:{searchParams:Promise<{token?:string}>}){const q=await searchParams;return <ForgotPasswordPage token={q.token}/>}

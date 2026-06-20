@@ -1,0 +1,1 @@
+import { MarketingShell } from "@/components/layout/MarketingShell";import { ContactPage } from "@/components/marketing/ContactPage";export default function Page(){return <MarketingShell><ContactPage/></MarketingShell>}
