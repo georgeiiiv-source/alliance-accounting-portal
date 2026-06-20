@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/src/styles.css";
 import "@/src/phase2.css";
+import "@/src/phase3.css";
 
 export const metadata: Metadata = {
   title: { default: "Alliance Accounting & Financial Services", template: "%s | Alliance Accounting" },

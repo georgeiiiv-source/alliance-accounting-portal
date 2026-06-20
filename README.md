@@ -75,10 +75,17 @@ IRS records are accessed only with taxpayer authorization through approved IRS e
 ## Validation
 
 ```powershell
+npm.cmd test
 npm.cmd run typecheck
 npm.cmd run build
 npm.cmd audit
 npx.cmd prisma validate
 ```
+
+## Phase 3 integrations
+
+Stripe Checkout sessions are created for unpaid client invoices and finalized only by signature-verified, idempotent webhook processing at `/api/stripe/webhook`. Configure that endpoint in Stripe and subscribe to `checkout.session.completed` and `checkout.session.expired`. Card data is handled by Stripe and is not stored by this application.
+
+Phase 3 also adds encrypted tax-organizer submissions, client task checklists, appointment requests and staff confirmation links, a staff workflow manager, and searchable/paginated audit-log views. IRS functionality remains limited to taxpayer authorization and manually recorded status workflows; there is no direct IRS API access.
 
 Before handling taxpayer information, complete threat modeling, penetration testing, backup/restore testing, incident-response exercises, staff security training, retention policies, vendor reviews, and an IRS Publication 4557-aligned Written Information Security Plan.

@@ -12,23 +12,27 @@ enum UserRole {
   STAFF
   ADMIN
 }
+
 enum InvoiceStatus {
   UNPAID
   PAID
   OVERDUE
   REFUNDED
 }
+
 enum MessageStatus {
   OPEN
   PENDING
   RESOLVED
 }
+
 enum ScanStatus {
   PENDING
   CLEAN
   QUARANTINED
   REJECTED
 }
+
 enum ServiceRequestStatus {
   NEW
   IN_PROGRESS
@@ -36,10 +40,39 @@ enum ServiceRequestStatus {
   COMPLETED
   CANCELLED
 }
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum OrganizerStatus {
+  DRAFT
+  SUBMITTED
+  NEEDS_UPDATE
+  REVIEWED
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentMode {
+  PHONE
+  VIDEO
+  IN_PERSON
+}
+
 enum AuthorizationForm {
   FORM_8821
   FORM_2848
 }
+
 enum TaxReturnStatus {
   CLIENT_REGISTERED
   ENGAGEMENT_LETTER_SENT
@@ -60,262 +93,343 @@ enum TaxReturnStatus {
 }
 
 model User {
-  id String @id @default(cuid())
-  name String?
-  email String @unique
-  emailVerified DateTime?
-  image String?
-  passwordHash String?
-  role UserRole @default(CLIENT)
-  mfaEnabled Boolean @default(false)
-  mfaSecretEncrypted Bytes?
-  lastLoginAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  accounts Account[]
-  sessions Session[]
-  profile ClientProfile?
-  assignedClients ClientProfile[] @relation("AssignedStaff")
-  uploadedDocuments Document[] @relation("UploadedBy")
-  ownedDocuments Document[] @relation("ClientDocuments")
-  requestedDocuments DocumentRequest[] @relation("DocumentRequestedBy")
-  documentRequests DocumentRequest[] @relation("ClientDocumentRequests")
-  taxReturns TaxReturn[] @relation("ClientTaxReturns")
-  taxUpdates TaxStatusEvent[] @relation("StatusUpdatedBy")
-  messageThreads MessageThread[] @relation("ClientThreads")
-  messages Message[]
-  invoices Invoice[]
-  tasks ClientTask[] @relation("ClientTasks")
-  createdTasks ClientTask[] @relation("TaskCreatedBy")
-  internalNotes InternalNote[] @relation("ClientNotes")
-  authoredNotes InternalNote[] @relation("NoteAuthor")
-  authorizations IrsAuthorization[] @relation("ClientAuthorizations")
-  verifiedAuthorizations IrsAuthorization[] @relation("AuthorizationVerifier")
-  serviceRequests ServiceRequest[]
-  auditEvents AuditLog[] @relation("AuditActor")
-  clientAuditEvents AuditLog[] @relation("AuditClient")
+  id                     String               @id @default(cuid())
+  name                   String?
+  email                  String               @unique
+  emailVerified          DateTime?
+  image                  String?
+  passwordHash           String?
+  role                   UserRole             @default(CLIENT)
+  mfaEnabled             Boolean              @default(false)
+  mfaSecretEncrypted     Bytes?
+  lastLoginAt            DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  accounts               Account[]
+  sessions               Session[]
+  profile                ClientProfile?
+  assignedClients        ClientProfile[]      @relation("AssignedStaff")
+  uploadedDocuments      Document[]           @relation("UploadedBy")
+  ownedDocuments         Document[]           @relation("ClientDocuments")
+  requestedDocuments     DocumentRequest[]    @relation("DocumentRequestedBy")
+  documentRequests       DocumentRequest[]    @relation("ClientDocumentRequests")
+  taxReturns             TaxReturn[]          @relation("ClientTaxReturns")
+  taxUpdates             TaxStatusEvent[]     @relation("StatusUpdatedBy")
+  messageThreads         MessageThread[]      @relation("ClientThreads")
+  messages               Message[]
+  invoices               Invoice[]
+  tasks                  ClientTask[]         @relation("ClientTasks")
+  createdTasks           ClientTask[]         @relation("TaskCreatedBy")
+  internalNotes          InternalNote[]       @relation("ClientNotes")
+  authoredNotes          InternalNote[]       @relation("NoteAuthor")
+  authorizations         IrsAuthorization[]   @relation("ClientAuthorizations")
+  verifiedAuthorizations IrsAuthorization[]   @relation("AuthorizationVerifier")
+  serviceRequests        ServiceRequest[]
+  taxOrganizers          TaxOrganizer[]       @relation("ClientOrganizers")
+  reviewedOrganizers     TaxOrganizer[]       @relation("OrganizerReviewer")
+  appointmentRequests    AppointmentRequest[] @relation("ClientAppointments")
+  assignedAppointments   AppointmentRequest[] @relation("AppointmentStaff")
+  auditEvents            AuditLog[]           @relation("AuditActor")
+  clientAuditEvents      AuditLog[]           @relation("AuditClient")
 }
 
 model Account {
-  id String @id @default(cuid())
-  userId String
-  type String
-  provider String
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
   providerAccountId String
-  refresh_token String?
-  access_token String?
-  expires_at Int?
-  token_type String?
-  scope String?
-  id_token String?
-  session_state String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
 
 model Session {
-  sessionToken String @unique
-  userId String
-  expires DateTime
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
   identifier String
-  token String
-  expires DateTime
+  token      String
+  expires    DateTime
+
   @@unique([identifier, token])
   @@index([expires])
 }
 
 model ClientProfile {
-  id String @id @default(cuid())
-  userId String @unique
-  fullName String
-  phone String?
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  fullName         String
+  phone            String?
   addressEncrypted Bytes?
-  taxYear Int?
-  filingType String?
-  assignedStaffId String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignedStaff User? @relation("AssignedStaff", fields: [assignedStaffId], references: [id])
+  taxYear          Int?
+  filingType       String?
+  assignedStaffId  String?
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedStaff    User?   @relation("AssignedStaff", fields: [assignedStaffId], references: [id])
 }
 
 model Document {
-  id String @id @default(cuid())
-  clientId String
-  uploadedById String
-  category String
-  displayName String
-  storageKey String @unique
-  mimeType String
-  byteSize BigInt
-  scanStatus ScanStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  client User @relation("ClientDocuments", fields: [clientId], references: [id], onDelete: Cascade)
-  uploadedBy User @relation("UploadedBy", fields: [uploadedById], references: [id])
+  id                 String              @id @default(cuid())
+  clientId           String
+  uploadedById       String
+  category           String
+  displayName        String
+  storageKey         String              @unique
+  mimeType           String
+  byteSize           BigInt
+  scanStatus         ScanStatus          @default(PENDING)
+  createdAt          DateTime            @default(now())
+  client             User                @relation("ClientDocuments", fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy         User                @relation("UploadedBy", fields: [uploadedById], references: [id])
   messageAttachments MessageAttachment[]
-  authorizations IrsAuthorization[]
+  authorizations     IrsAuthorization[]
+
   @@index([clientId, createdAt(sort: Desc)])
 }
 
 model DocumentRequest {
-  id String @id @default(cuid())
-  clientId String
+  id            String    @id @default(cuid())
+  clientId      String
   requestedById String
-  category String?
-  note String?
-  dueAt DateTime?
-  completedAt DateTime?
-  client User @relation("ClientDocumentRequests", fields: [clientId], references: [id], onDelete: Cascade)
-  requestedBy User @relation("DocumentRequestedBy", fields: [requestedById], references: [id])
+  category      String?
+  note          String?
+  dueAt         DateTime?
+  completedAt   DateTime?
+  client        User      @relation("ClientDocumentRequests", fields: [clientId], references: [id], onDelete: Cascade)
+  requestedBy   User      @relation("DocumentRequestedBy", fields: [requestedById], references: [id])
+
   @@index([clientId, completedAt])
 }
 
 model TaxReturn {
-  id String @id @default(cuid())
-  clientId String
-  taxYear Int
-  filingType String?
-  status TaxReturnStatus @default(CLIENT_REGISTERED)
-  statusUpdatedAt DateTime @default(now())
-  client User @relation("ClientTaxReturns", fields: [clientId], references: [id], onDelete: Cascade)
-  events TaxStatusEvent[]
+  id              String           @id @default(cuid())
+  clientId        String
+  taxYear         Int
+  filingType      String?
+  status          TaxReturnStatus  @default(CLIENT_REGISTERED)
+  statusUpdatedAt DateTime         @default(now())
+  client          User             @relation("ClientTaxReturns", fields: [clientId], references: [id], onDelete: Cascade)
+  events          TaxStatusEvent[]
+
   @@unique([clientId, taxYear])
 }
 
 model TaxStatusEvent {
-  id String @id @default(cuid())
+  id          String          @id @default(cuid())
   taxReturnId String
-  status TaxReturnStatus
-  note String?
+  status      TaxReturnStatus
+  note        String?
   createdById String
-  createdAt DateTime @default(now())
-  taxReturn TaxReturn @relation(fields: [taxReturnId], references: [id], onDelete: Cascade)
-  createdBy User @relation("StatusUpdatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  taxReturn   TaxReturn       @relation(fields: [taxReturnId], references: [id], onDelete: Cascade)
+  createdBy   User            @relation("StatusUpdatedBy", fields: [createdById], references: [id])
 }
 
 model MessageThread {
-  id String @id @default(cuid())
-  clientId String
-  subject String
-  status MessageStatus @default(OPEN)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  client User @relation("ClientThreads", fields: [clientId], references: [id], onDelete: Cascade)
-  messages Message[]
+  id        String        @id @default(cuid())
+  clientId  String
+  subject   String
+  status    MessageStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  client    User          @relation("ClientThreads", fields: [clientId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
   @@index([clientId, updatedAt(sort: Desc)])
 }
 
 model Message {
-  id String @id @default(cuid())
-  threadId String
-  senderId String
+  id            String              @id @default(cuid())
+  threadId      String
+  senderId      String
   bodyEncrypted Bytes
-  readAt DateTime?
-  createdAt DateTime @default(now())
-  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [senderId], references: [id])
-  attachments MessageAttachment[]
+  readAt        DateTime?
+  createdAt     DateTime            @default(now())
+  thread        MessageThread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender        User                @relation(fields: [senderId], references: [id])
+  attachments   MessageAttachment[]
+
   @@index([threadId, createdAt])
   @@index([senderId, readAt])
 }
 
 model MessageAttachment {
-  messageId String
+  messageId  String
   documentId String
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   @@id([messageId, documentId])
 }
 
 model Invoice {
-  id String @id @default(cuid())
-  clientId String
-  number String @unique
-  description String
-  amountCents Int
-  currency String @default("USD")
-  status InvoiceStatus @default(UNPAID)
-  stripePaymentIntentId String?
-  dueAt DateTime?
-  paidAt DateTime?
-  createdAt DateTime @default(now())
-  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id                      String        @id @default(cuid())
+  clientId                String
+  number                  String        @unique
+  description             String
+  amountCents             Int
+  currency                String        @default("USD")
+  status                  InvoiceStatus @default(UNPAID)
+  stripePaymentIntentId   String?
+  stripeCheckoutSessionId String?       @unique
+  dueAt                   DateTime?
+  paidAt                  DateTime?
+  createdAt               DateTime      @default(now())
+  client                  User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  payments                Payment[]
+
   @@index([clientId, status])
 }
 
+model Payment {
+  id                String        @id @default(cuid())
+  invoiceId         String
+  provider          String        @default("STRIPE")
+  providerPaymentId String?       @unique
+  checkoutSessionId String?       @unique
+  amountCents       Int
+  currency          String        @default("USD")
+  status            PaymentStatus @default(PENDING)
+  receiptUrl        String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  invoice           Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, status])
+}
+
 model ClientTask {
-  id String @id @default(cuid())
-  clientId String
-  title String
-  dueAt DateTime?
+  id          String    @id @default(cuid())
+  clientId    String
+  title       String
+  dueAt       DateTime?
   completedAt DateTime?
   createdById String
-  client User @relation("ClientTasks", fields: [clientId], references: [id], onDelete: Cascade)
-  createdBy User @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  client      User      @relation("ClientTasks", fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
   @@index([clientId, completedAt, dueAt])
 }
 
+model TaxOrganizer {
+  id               String          @id @default(cuid())
+  clientId         String
+  taxYear          Int
+  status           OrganizerStatus @default(DRAFT)
+  answersEncrypted Bytes
+  submittedAt      DateTime?
+  reviewedAt       DateTime?
+  reviewedById     String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  client           User            @relation("ClientOrganizers", fields: [clientId], references: [id], onDelete: Cascade)
+  reviewedBy       User?           @relation("OrganizerReviewer", fields: [reviewedById], references: [id])
+
+  @@unique([clientId, taxYear])
+  @@index([status, updatedAt(sort: Desc)])
+}
+
+model AppointmentRequest {
+  id              String            @id @default(cuid())
+  clientId        String
+  requestedStart  DateTime
+  alternateStart  DateTime?
+  timeZone        String
+  durationMinutes Int               @default(30)
+  mode            AppointmentMode
+  topic           String
+  notesEncrypted  Bytes?
+  status          AppointmentStatus @default(REQUESTED)
+  meetingUrl      String?
+  assignedStaffId String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  client          User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
+  assignedStaff   User?             @relation("AppointmentStaff", fields: [assignedStaffId], references: [id])
+
+  @@index([clientId, status, requestedStart])
+  @@index([status, requestedStart])
+}
+
+model StripeWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+}
+
 model InternalNote {
-  id String @id @default(cuid())
-  clientId String
-  authorId String
+  id            String   @id @default(cuid())
+  clientId      String
+  authorId      String
   bodyEncrypted Bytes
-  createdAt DateTime @default(now())
-  client User @relation("ClientNotes", fields: [clientId], references: [id], onDelete: Cascade)
-  author User @relation("NoteAuthor", fields: [authorId], references: [id])
+  createdAt     DateTime @default(now())
+  client        User     @relation("ClientNotes", fields: [clientId], references: [id], onDelete: Cascade)
+  author        User     @relation("NoteAuthor", fields: [authorId], references: [id])
 }
 
 model IrsAuthorization {
-  id String @id @default(cuid())
-  clientId String
-  formType AuthorizationForm
-  documentId String
-  verifiedById String?
-  verifiedAt DateTime?
-  expiresAt DateTime?
+  id               String            @id @default(cuid())
+  clientId         String
+  formType         AuthorizationForm
+  documentId       String
+  verifiedById     String?
+  verifiedAt       DateTime?
+  expiresAt        DateTime?
   requestReference String?
-  statusNote String?
-  createdAt DateTime @default(now())
-  client User @relation("ClientAuthorizations", fields: [clientId], references: [id], onDelete: Cascade)
-  document Document @relation(fields: [documentId], references: [id])
-  verifiedBy User? @relation("AuthorizationVerifier", fields: [verifiedById], references: [id])
+  statusNote       String?
+  createdAt        DateTime          @default(now())
+  client           User              @relation("ClientAuthorizations", fields: [clientId], references: [id], onDelete: Cascade)
+  document         Document          @relation(fields: [documentId], references: [id])
+  verifiedBy       User?             @relation("AuthorizationVerifier", fields: [verifiedById], references: [id])
 }
 
 model ServiceRequest {
-  id String @id @default(cuid())
-  clientId String
-  kind String
+  id               String               @id @default(cuid())
+  clientId         String
+  kind             String
   detailsEncrypted Bytes?
-  status ServiceRequestStatus @default(NEW)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  client User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status           ServiceRequestStatus @default(NEW)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  client           User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
   @@index([clientId, status, createdAt(sort: Desc)])
 }
 
 model LeadInquiry {
-  id String @id @default(cuid())
-  name String
-  email String
-  kind String
-  details String
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  kind      String
+  details   String
   createdAt DateTime @default(now())
 }
 
 model AuditLog {
-  id BigInt @id @default(autoincrement())
-  actorId String?
-  clientId String?
-  action String
+  id         BigInt   @id @default(autoincrement())
+  actorId    String?
+  clientId   String?
+  action     String
   entityType String?
-  entityId String?
-  ipHash String?
-  userAgent String?
-  metadata Json?
-  createdAt DateTime @default(now())
-  actor User? @relation("AuditActor", fields: [actorId], references: [id])
-  client User? @relation("AuditClient", fields: [clientId], references: [id])
+  entityId   String?
+  ipHash     String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id])
+  client     User?    @relation("AuditClient", fields: [clientId], references: [id])
+
   @@index([clientId, createdAt(sort: Desc)])
 }
