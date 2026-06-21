@@ -6,11 +6,16 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
     return { delivered: false, reason: "Resend is not configured" };
   }
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to], subject, html })
-  });
+  let response: Response;
+  try {
+    response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to], subject, html })
+    });
+  } catch (error) {
+    return { delivered: false, reason: error instanceof Error ? error.message : "Resend request failed" };
+  }
   const body = await response.json().catch(() => ({})) as { id?: string; message?: string };
   if (!response.ok) return { delivered: false, reason: body.message ?? `Resend returned ${response.status}` };
   return { delivered: true, id: body.id };

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notifyInvoiceEvent } from "@/lib/notifications";
 import { verifyStripeSignature } from "@/lib/stripe";
 import { Prisma } from "@prisma/client";
 
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
   if (!event.id || !event.type) return new Response("Invalid event", { status: 400 });
   const object = event.data.object;
   const invoiceId = object.metadata?.invoiceId ?? object.client_reference_id;
+  let paidNotification: { clientId: string; invoiceNumber: string } | undefined;
   try {
     await prisma.$transaction(async tx => {
       await tx.stripeWebhookEvent.create({ data: { id: event.id, type: event.type } });
@@ -21,6 +23,7 @@ export async function POST(request: Request) {
         await tx.invoice.update({ where: { id: invoice.id }, data: { status: "PAID", paidAt: new Date(), stripePaymentIntentId: object.payment_intent ?? undefined, stripeCheckoutSessionId: object.id } });
         await tx.payment.upsert({ where: { checkoutSessionId: object.id }, create: { invoiceId: invoice.id, checkoutSessionId: object.id, providerPaymentId: object.payment_intent ?? null, amountCents: invoice.amountCents, currency: invoice.currency, status: "SUCCEEDED" }, update: { providerPaymentId: object.payment_intent ?? undefined, status: "SUCCEEDED" } });
         await tx.auditLog.create({ data: { clientId: invoice.clientId, action: "INVOICE_PAID", entityType: "Invoice", entityId: invoice.id, metadata: { provider: "STRIPE", eventId: event.id } } });
+        paidNotification = { clientId: invoice.clientId, invoiceNumber: invoice.number };
       }
       if (event.type === "checkout.session.expired") await tx.payment.updateMany({ where: { checkoutSessionId: object.id, status: "PENDING" }, data: { status: "FAILED" } });
     });
@@ -28,5 +31,6 @@ export async function POST(request: Request) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return new Response("Already processed");
     return new Response(error instanceof Error ? error.message : "Webhook processing failed", { status: 500 });
   }
+  if (paidNotification) await notifyInvoiceEvent({ actorId: paidNotification.clientId, clientId: paidNotification.clientId, invoiceNumber: paidNotification.invoiceNumber, event: "PAID" });
   return new Response("OK");
 }

@@ -1,3 +1,25 @@
-import { auth } from "@/auth";import { prisma } from "@/lib/prisma";import { isStaff,jsonError } from "@/lib/api";import { NextResponse } from "next/server";import { z } from "zod";
-export async function GET(request:Request){const session=await auth();if(!session?.user)return jsonError('Unauthorized',401);const clientId=isStaff(session)?new URL(request.url).searchParams.get('clientId'):session.user.id;if(!clientId)return jsonError('clientId required');return NextResponse.json(await prisma.invoice.findMany({where:{clientId},orderBy:{createdAt:'desc'}}))}
-export async function POST(request:Request){const session=await auth();if(!isStaff(session))return jsonError('Forbidden',403);const parsed=z.object({clientId:z.string(),number:z.string().min(1),description:z.string().min(1),amountCents:z.number().int().positive(),dueAt:z.string().datetime().optional()}).safeParse(await request.json());if(!parsed.success)return jsonError('Invalid invoice');const invoice=await prisma.invoice.create({data:{...parsed.data,dueAt:parsed.data.dueAt?new Date(parsed.data.dueAt):null}});await prisma.auditLog.create({data:{actorId:session!.user.id,clientId:parsed.data.clientId,action:'INVOICE_CREATED',entityType:'Invoice',entityId:invoice.id}});return NextResponse.json(invoice,{status:201})}
+import { auth } from "@/auth";
+import { isStaff, jsonError } from "@/lib/api";
+import { notifyInvoiceEvent } from "@/lib/notifications";
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user) return jsonError("Unauthorized", 401);
+  const clientId = isStaff(session) ? new URL(request.url).searchParams.get("clientId") : session.user.id;
+  if (!clientId) return jsonError("clientId required");
+  return NextResponse.json(await prisma.invoice.findMany({ where: { clientId }, orderBy: { createdAt: "desc" } }));
+}
+
+export async function POST(request: Request) {
+  const session = await auth();
+  if (!isStaff(session)) return jsonError("Forbidden", 403);
+  const parsed = z.object({ clientId: z.string(), number: z.string().min(1), description: z.string().min(1), amountCents: z.number().int().positive(), dueAt: z.string().datetime().optional() }).safeParse(await request.json());
+  if (!parsed.success) return jsonError("Invalid invoice");
+  const invoice = await prisma.invoice.create({ data: { ...parsed.data, dueAt: parsed.data.dueAt ? new Date(parsed.data.dueAt) : null } });
+  await prisma.auditLog.create({ data: { actorId: session!.user.id, clientId: invoice.clientId, action: "INVOICE_CREATED", entityType: "Invoice", entityId: invoice.id } });
+  await notifyInvoiceEvent({ actorId: session!.user.id, clientId: invoice.clientId, invoiceNumber: invoice.number, event: "CREATED" });
+  return NextResponse.json(invoice, { status: 201 });
+}
