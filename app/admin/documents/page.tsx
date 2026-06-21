@@ -41,7 +41,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
       <label>To<input name="to" type="date" defaultValue={to} /></label>
       <button className="btn">Apply filters</button>
     </form>
-    <DocumentReviewTable documents={documents.map(document => ({
+    <DocumentReviewTable localTesting={process.env.NODE_ENV !== "production"} documents={documents.map(document => ({
       id: document.id,
       clientName: document.client.profile?.fullName ?? document.client.name ?? "Client",
       clientEmail: document.client.email,

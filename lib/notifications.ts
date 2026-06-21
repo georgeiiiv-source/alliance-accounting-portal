@@ -29,11 +29,19 @@ export async function notifyDocumentUploaded(actorId: string, clientId: string, 
   }));
 }
 
-export async function notifyDocumentScanResult(clientId: string, displayName: string, safe: boolean) {
+export async function notifyDocumentScanResult(clientId: string, displayName: string, safe: boolean, actorId = clientId) {
   const client = await prisma.user.findUnique({ where: { id: clientId } });
   if (!client) return;
   const result = await sendEmail(client.email, safe ? "Document received securely" : "Action required for document upload", notificationEmail(safe ? "Your document is ready" : "Your document needs attention", safe ? `${displayName} passed security scanning and is available to your Alliance team.` : `${displayName} could not be accepted. Please contact your Alliance team and upload a clean copy.`, `${getAppUrl()}/portal/documents`, "View documents"));
-  await recordDelivery(clientId, clientId, client.email, "DOCUMENT_SCAN", result.delivered, result.reason);
+  await recordDelivery(actorId, clientId, client.email, "DOCUMENT_SCAN", result.delivered, result.reason);
+}
+
+export async function notifyDocumentReviewUpdated(actorId: string, clientId: string, displayName: string, status: string) {
+  const client = await prisma.user.findUnique({ where: { id: clientId }, select: { email: true } });
+  if (!client) return;
+  const label = status.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, value => value.toUpperCase());
+  const result = await sendEmail(client.email, "Document review status updated", notificationEmail("Document review updated", `${displayName} is now marked ${label}.`, `${getAppUrl()}/portal/documents`, "View documents"));
+  await recordDelivery(actorId, clientId, client.email, "DOCUMENT_REVIEW_UPDATED", result.delivered, result.reason);
 }
 
 export async function notifyInvoiceEvent(input: { actorId: string; clientId: string; invoiceNumber: string; event: "CREATED"|"PAID"|"OVERDUE"|"REFUNDED" }) {

@@ -53,7 +53,21 @@ function ReviewControl({ document }: { document: DocumentRow }) {
   </div>;
 }
 
-export function DocumentReviewTable({ documents }: { documents: DocumentRow[] }) {
+function ScanCleanButton({ document }: { document: DocumentRow }) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  async function markClean() {
+    setSaving(true); setError("");
+    const response = await fetch(`/api/documents/${document.id}/scan-clean`, { method: "POST" });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) { setError(body.error ?? "Scan update failed"); setSaving(false); return; }
+    router.refresh();
+  }
+  return <><button className="scan-clean-button" type="button" disabled={saving} onClick={markClean}>{saving ? "Marking clean..." : "Mark security scan clean"}</button>{error && <small className="form-error">{error}</small>}</>;
+}
+
+export function DocumentReviewTable({ documents, localTesting }: { documents: DocumentRow[]; localTesting: boolean }) {
   return <section className="panel admin-documents-table">
     <div className="document-row heading"><span>CLIENT / DOCUMENT</span><span>CATEGORY</span><span>UPLOADED</span><span>SECURITY</span><span>REVIEW STATUS</span><span>FILE</span><span>STAFF ACTION</span></div>
     {documents.map(document => <div className="document-row" key={document.id}>
@@ -62,7 +76,7 @@ export function DocumentReviewTable({ documents }: { documents: DocumentRow[] })
       <time>{new Date(document.createdAt).toLocaleString()}</time>
       <span><i className={`pill ${document.scanStatus.toLowerCase()}`}>{label(document.scanStatus)}</i></span>
       <span><i className={`pill ${document.reviewStatus.toLowerCase()}`}>{label(document.reviewStatus)}</i>{document.reviewedBy && <small>{document.reviewedBy}{document.reviewedAt ? ` · ${new Date(document.reviewedAt).toLocaleDateString()}` : ""}</small>}</span>
-      <span className="document-file-actions">{document.scanStatus === "CLEAN" ? <><a href={`/api/documents/${document.id}/download?disposition=inline`} target="_blank" rel="noreferrer"><ExternalLink />View</a><a href={`/api/documents/${document.id}/download`}><Download />Download</a></> : <small>Available after clean scan</small>}</span>
+      <span className="document-file-actions">{document.scanStatus === "CLEAN" ? <><a href={`/api/documents/${document.id}/download?disposition=inline`} target="_blank" rel="noreferrer"><ExternalLink />View</a><a href={`/api/documents/${document.id}/download`}><Download />Download</a></> : <><small>Available after clean scan</small>{localTesting && <ScanCleanButton document={document} />}</>}</span>
       <ReviewControl document={document} />
     </div>)}
     {!documents.length && <div className="empty-state">No documents match these filters.</div>}

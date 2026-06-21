@@ -3,6 +3,8 @@ import "@/src/styles.css";
 import "@/src/phase2.css";
 import "@/src/phase3.css";
 import "@/src/document-workflow.css";
+import "@/src/admin-login.css";
+import "@/src/admin-clients.css";
 
 export const metadata: Metadata = {
   title: { default: "Alliance Accounting & Financial Services", template: "%s | Alliance Accounting" },

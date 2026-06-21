@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { isStaff, jsonError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENT_REVIEW_ACTIONS } from "@/lib/document-workflow";
+import { notifyDocumentReviewUpdated } from "@/lib/notifications";
 
 const reviewInput = z.object({
   status: z.enum(DOCUMENT_REVIEW_ACTIONS),
@@ -42,5 +43,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     return updated;
   });
+  await notifyDocumentReviewUpdated(session.user.id, document.clientId, document.displayName, document.reviewStatus);
   return NextResponse.json({ ...document, byteSize: document.byteSize.toString() });
 }

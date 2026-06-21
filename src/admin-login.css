@@ -1,0 +1,5 @@
+.admin-login-page{--admin-purple:#6c3a91;--admin-purple-dark:#3f1d5c;background:#f8f4fb}
+.admin-login-page .login-side{background:radial-gradient(circle at 82% 18%,#b98bd344 0 18%,transparent 40%),linear-gradient(145deg,#2d153f,#5c2c78 58%,#74469a);color:#fff}
+.admin-login-page .login-side em,.admin-login-page .eyebrow.light{color:#dcc2ed}.admin-login-page .eyebrow span{background:#cda8e4}.admin-login-page .logo .mark{border-color:#d4b4e8}.admin-login-page .logo .mark:after{border-color:#d4b4e8}
+.admin-login-page .login-form{background:linear-gradient(180deg,#fff 0,#f8f3fb 100%)}.admin-login-page .form-wrap h2{color:var(--admin-purple-dark)}.admin-login-page .form-wrap input:focus{border-color:var(--admin-purple);box-shadow:0 0 0 3px #6c3a911c}.admin-login-page .form-wrap label a,.admin-login-page .switch a{color:var(--admin-purple)}
+.admin-login-page .btn{background:var(--admin-purple)}.admin-login-page .btn:hover{background:#582b7a}.admin-login-page .mfa{color:#5d3a70}.admin-login-page .login-security{border-color:#ffffff24;background:#ffffff0a}
