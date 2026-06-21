@@ -20,9 +20,11 @@ export async function notifyMessageRecipients(input: { actorId: string; clientId
 
 export async function notifyDocumentUploaded(actorId: string, clientId: string, displayName: string) {
   const client = await prisma.user.findUnique({ where: { id: clientId }, include: { profile: { include: { assignedStaff: true } } } });
-  const recipients = client?.profile?.assignedStaff ? [client.profile.assignedStaff] : await prisma.user.findMany({ where: { role: { in: ["STAFF", "ADMIN"] } }, take: 10 });
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, take: 10 });
+  const staff = client?.profile?.assignedStaff ? [client.profile.assignedStaff] : await prisma.user.findMany({ where: { role: "STAFF" }, take: 10 });
+  const recipients = [...new Map([...admins, ...staff].map(recipient => [recipient.id, recipient])).values()];
   await Promise.all(recipients.map(async recipient => {
-    const result = await sendEmail(recipient.email, "Client document uploaded", notificationEmail("A document was uploaded", `${client?.name ?? "A client"} uploaded ${displayName}. The file remains quarantined until scanning completes.`, `${getAppUrl()}/admin`, "Open admin dashboard"));
+    const result = await sendEmail(recipient.email, "Client document uploaded", notificationEmail("A document was uploaded", `${client?.name ?? "A client"} uploaded ${displayName}. The file remains quarantined until scanning completes.`, `${getAppUrl()}/admin/documents`, "Review client documents"));
     await recordDelivery(actorId, clientId, recipient.email, "DOCUMENT_UPLOAD", result.delivered, result.reason);
   }));
 }

@@ -33,6 +33,14 @@ enum ScanStatus {
   REJECTED
 }
 
+enum DocumentReviewStatus {
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
+  NEEDS_REPLACEMENT
+}
+
 enum ServiceRequestStatus {
   NEW
   IN_PROGRESS
@@ -110,6 +118,7 @@ model User {
   profile                ClientProfile?
   assignedClients        ClientProfile[]      @relation("AssignedStaff")
   uploadedDocuments      Document[]           @relation("UploadedBy")
+  reviewedDocuments      Document[]           @relation("ReviewedBy")
   ownedDocuments         Document[]           @relation("ClientDocuments")
   requestedDocuments     DocumentRequest[]    @relation("DocumentRequestedBy")
   documentRequests       DocumentRequest[]    @relation("ClientDocumentRequests")
@@ -181,22 +190,28 @@ model ClientProfile {
 }
 
 model Document {
-  id                 String              @id @default(cuid())
+  id                 String               @id @default(cuid())
   clientId           String
   uploadedById       String
   category           String
   displayName        String
-  storageKey         String              @unique
+  storageKey         String               @unique
   mimeType           String
   byteSize           BigInt
-  scanStatus         ScanStatus          @default(PENDING)
-  createdAt          DateTime            @default(now())
-  client             User                @relation("ClientDocuments", fields: [clientId], references: [id], onDelete: Cascade)
-  uploadedBy         User                @relation("UploadedBy", fields: [uploadedById], references: [id])
+  scanStatus         ScanStatus           @default(PENDING)
+  reviewStatus       DocumentReviewStatus @default(PENDING)
+  reviewedAt         DateTime?
+  reviewedById       String?
+  reviewNote         String?
+  createdAt          DateTime             @default(now())
+  client             User                 @relation("ClientDocuments", fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy         User                 @relation("UploadedBy", fields: [uploadedById], references: [id])
+  reviewedBy         User?                @relation("ReviewedBy", fields: [reviewedById], references: [id])
   messageAttachments MessageAttachment[]
   authorizations     IrsAuthorization[]
 
   @@index([clientId, createdAt(sort: Desc)])
+  @@index([reviewStatus, createdAt(sort: Desc)])
 }
 
 model DocumentRequest {

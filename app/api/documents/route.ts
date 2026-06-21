@@ -1,4 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import type { DocumentReviewStatus, Prisma, ScanStatus } from "@prisma/client";
 import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
@@ -11,10 +12,30 @@ import { allowedMimeTypes, hashIp, MAX_FILE_BYTES } from "@/lib/security";
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user) return jsonError("Unauthorized", 401);
-  const clientId = isStaff(session) ? new URL(request.url).searchParams.get("clientId") : session.user.id;
-  if (!clientId) return jsonError("clientId required");
-  const documents = await prisma.document.findMany({ where: { clientId }, orderBy: { createdAt: "desc" } });
-  return NextResponse.json(documents.map(d => ({ ...d, byteSize: d.byteSize.toString(), downloadUrl: d.scanStatus === "CLEAN" ? `/api/documents/${d.id}/download` : null })));
+  const url = new URL(request.url);
+  const clientId = isStaff(session) ? url.searchParams.get("clientId") : session.user.id;
+  const category = url.searchParams.get("category");
+  const reviewStatus = url.searchParams.get("status") as DocumentReviewStatus | null;
+  const scanStatus = url.searchParams.get("scanStatus") as ScanStatus | null;
+  const from = url.searchParams.get("from");
+  const to = url.searchParams.get("to");
+  const where: Prisma.DocumentWhereInput = {
+    clientId: clientId || undefined,
+    category: category || undefined,
+    reviewStatus: reviewStatus || undefined,
+    scanStatus: scanStatus || undefined,
+    createdAt: from || to ? {
+      gte: from ? new Date(`${from}T00:00:00.000Z`) : undefined,
+      lte: to ? new Date(`${to}T23:59:59.999Z`) : undefined,
+    } : undefined,
+  };
+  const documents = await prisma.document.findMany({
+    where,
+    include: { client: { select: { id: true, name: true, email: true, profile: { select: { fullName: true } } } }, reviewedBy: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 500,
+  });
+  return NextResponse.json(documents.map(d => ({ ...d, byteSize: d.byteSize.toString(), downloadUrl: d.scanStatus === "CLEAN" ? `/api/documents/${d.id}/download` : null, viewUrl: d.scanStatus === "CLEAN" ? `/api/documents/${d.id}/download?disposition=inline` : null })));
 }
 
 export async function POST(request: Request) {
@@ -44,8 +65,8 @@ export async function POST(request: Request) {
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const document = await prisma.$transaction(async tx => {
-    const created = await tx.document.create({ data: { clientId, uploadedById: session.user.id, category, displayName: file.name, storageKey: key, mimeType: file.type, byteSize: file.size, scanStatus: "PENDING" } });
-    await tx.auditLog.create({ data: { actorId: session.user.id, clientId, action: "DOCUMENT_UPLOAD", entityType: "Document", entityId: created.id, ipHash: hashIp(ip), userAgent: request.headers.get("user-agent"), metadata: { scanStatus: "PENDING", checksumSha256: checksum } } });
+    const created = await tx.document.create({ data: { clientId, uploadedById: session.user.id, category, displayName: file.name, storageKey: key, mimeType: file.type, byteSize: file.size, scanStatus: "PENDING", reviewStatus: "PENDING" } });
+    await tx.auditLog.create({ data: { actorId: session.user.id, clientId, action: "DOCUMENT_UPLOAD", entityType: "Document", entityId: created.id, ipHash: hashIp(ip), userAgent: request.headers.get("user-agent"), metadata: { scanStatus: "PENDING", reviewStatus: "PENDING", checksumSha256: checksum } } });
     return created;
   });
   await notifyDocumentUploaded(session.user.id, clientId, file.name);
