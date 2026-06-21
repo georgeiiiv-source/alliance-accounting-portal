@@ -2,6 +2,8 @@
 
 This guide explains the Phase 3 staff workspace. It is written for firm staff and administrators, not developers.
 
+> Screenshots use fictitious demo users and records. They contain no real client or credential data.
+
 ## 1. Before using the system
 
 Use a firm-managed computer with current security updates, disk encryption, antivirus protection, and a supported browser. Do not use public/shared computers or public Wi-Fi for taxpayer information.
@@ -11,6 +13,8 @@ A staff or administrator account must be provisioned with the `STAFF` or `ADMIN`
 Provider accounts—email, hosting, AWS, Stripe, database, and GitHub—must use multi-factor authentication. Phase 3 reserves portal MFA fields but does not yet provide a complete end-user MFA setup/challenge screen.
 
 ## 2. Sign in and sign out
+
+![AllianceAccounting staff and client login](screenshots/client/login.png)
 
 1. Open the firm's HTTPS website and choose **Client Login**.
 2. Enter the staff email and password.
@@ -29,6 +33,16 @@ If login fails:
 ## 3. Staff dashboard
 
 Open **Dashboard** or `/admin`.
+
+![Staff dashboard overview](screenshots/admin/dashboard.png)
+
+Use the dashboard in this order:
+
+1. Review the six summary cards for urgent counts and balances.
+2. Open the workload cards for tasks, organizers, or appointments.
+3. Check **Clients needing attention** for missing documents and assignments.
+4. Review the priority queue and recent audit activity.
+5. Export the client list only when an approved business process requires it.
 
 The summary cards show:
 
@@ -57,6 +71,10 @@ Treat the export as taxpayer information:
 ## 4. Workflow manager
 
 Open **Workflows** in the left navigation or `/admin/workflows`.
+
+![Staff workflow manager](screenshots/admin/workflows.png)
+
+The workflow manager has three working areas: client tasks, appointment requests, and submitted tax organizers. Process each item from the oldest or most urgent request unless firm policy specifies another priority.
 
 ### Assign a client task
 
@@ -93,6 +111,8 @@ Phase 3's workflow screen shows organizer status but does not yet include a poli
 ## 5. Audit log
 
 Open **Audit logs** or `/admin/audit-logs`.
+
+![Searchable staff audit log](screenshots/admin/audit-logs.png)
 
 The audit view can filter by:
 

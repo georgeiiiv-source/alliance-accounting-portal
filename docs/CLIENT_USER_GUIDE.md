@@ -2,6 +2,8 @@
 
 This guide explains how clients register, sign in, and use the secure AllianceAccounting portal.
 
+> Screenshots use fictitious demo users and records. They contain no real client, payment-card, or tax data.
+
 ## 1. Protect your account
 
 - Use the firm's official HTTPS website and check the address before entering a password.
@@ -13,6 +15,8 @@ This guide explains how clients register, sign in, and use the secure AllianceAc
 AllianceAccounting staff will not ask for your password. If a message or phone call feels suspicious, stop and contact the firm using a known phone number.
 
 ## 2. Create an account
+
+![Create a client portal account](screenshots/client/register.png)
 
 1. Choose **Get Started** or open `/register`.
 2. Enter your name and email address.
@@ -32,9 +36,13 @@ Public registration creates a client account. If the email is already registered
 
 ## 3. Sign in, reset a password, and sign out
 
+![Client portal login](screenshots/client/login.png)
+
 Open `/login`, enter the verified email and password, and choose **Sign in**. Successful client login opens the protected portal.
 
 If the password is forgotten:
+
+![Request a password reset](screenshots/client/forgot-password.png)
 
 1. Select **Forgot password**.
 2. Enter the account email.
@@ -44,9 +52,15 @@ If the password is forgotten:
 
 Reset links work once. Request a new link if it is expired. At the end of a session, use **Sign out** in the portal navigation.
 
+After opening the email link, the reset screen asks for the new password twice:
+
+![Choose a new password](screenshots/client/reset-password.png)
+
 Phase 3 does not yet include a completed portal multi-factor authentication setup screen. This guide will be updated when client MFA enrollment is available.
 
 ## 4. Portal overview
+
+![Client portal dashboard](screenshots/client/dashboard.png)
 
 The `/portal` dashboard summarizes:
 
@@ -58,9 +72,18 @@ The `/portal` dashboard summarizes:
 
 Use the navigation to open Documents, Tax return status, Tax organizer, My tasks, Appointments, Invoices & payments, Messages, and Service requests.
 
+Start each visit by:
+
+1. Reviewing the current tax-return status.
+2. Checking requested documents and incomplete tasks.
+3. Reviewing unread secure messages.
+4. Checking the balance due before opening individual invoices.
+
 ## 5. Upload documents securely
 
 Open **Documents** or `/portal/documents`.
+
+![Secure document upload and history](screenshots/client/documents.png)
 
 ### Supported files
 
@@ -96,6 +119,8 @@ Files are stored in a private, encrypted Amazon S3 bucket. Approved downloads us
 
 Open **Tax return status** or `/portal/tax-status`.
 
+![Tax preparation status tracker](screenshots/client/tax-status.png)
+
 The tracker can display these stages:
 
 1. Client registered
@@ -123,6 +148,8 @@ If a status appears outdated, send a secure message. Do not assume that “E-fil
 
 Open **Tax organizer** or `/portal/tax-organizer`. The organizer uses the tax year in the client profile, or the prior calendar year when none is set.
 
+![Annual tax organizer questionnaire](screenshots/client/tax-organizer.png)
+
 The questionnaire asks about:
 
 - Expected filing status.
@@ -148,6 +175,8 @@ Do not enter Social Security numbers, passwords, payment-card information, or fu
 
 Open **My tasks** or `/portal/tasks`.
 
+![Client task checklist](screenshots/client/tasks.png)
+
 Each task shows a title and optional due date. Select the circle next to a task when it is complete. Select the completed item again to reopen it if it was checked accidentally.
 
 Completing a task does not automatically upload a document or change a tax-return status. If the task asks for a document, upload it first and then mark the task complete. Task changes are recorded in the audit history.
@@ -155,6 +184,8 @@ Completing a task does not automatically upload a document or change a tax-retur
 ## 9. Request an appointment
 
 Open **Appointments** or `/portal/appointments`.
+
+![Appointment scheduling request](screenshots/client/appointments.png)
 
 1. Choose a preferred future date and time.
 2. Optionally add an alternate time.
@@ -170,6 +201,8 @@ Do not place SSNs or other highly sensitive values in the appointment topic or n
 ## 10. View and pay invoices
 
 Open **Invoices & payments** or `/portal/invoices`.
+
+![Invoice and payment center](screenshots/client/invoices.png)
 
 The page shows current balance, invoice number, description, creation date, due date, amount, and status:
 
@@ -196,6 +229,8 @@ If Stripe reports success but the portal remains unpaid, do not submit a second 
 
 Open **Messages** or `/portal/messages`.
 
+![Secure client and staff messages](screenshots/client/messages.png)
+
 ### Start a conversation
 
 1. Choose **New message**.
@@ -214,6 +249,8 @@ The database supports document-to-message attachments, but the Phase 3 client sc
 ## 12. Request additional services
 
 Open **Service requests** or `/portal/service-requests`.
+
+![Remote accounting service request form](screenshots/client/service-requests.png)
 
 Current choices include:
 
@@ -241,6 +278,9 @@ Depending on the activity, email may be sent for:
 - Password reset.
 - Verification success.
 - A new secure message.
+- A document upload or scan result.
+- A new invoice or invoice status change.
+- A tax preparation status change.
 - Document scan success or rejection.
 
 Email notifications contain a portal link and non-sensitive summary. Sign in through the known firm website if a link looks unusual. Never reply to a notification email with tax documents or account information.
