@@ -51,6 +51,7 @@ For a plain-language walkthrough covering local setup, cloud accounts, PostgreSQ
 
 Additional documentation:
 
+- [Local testing checklist](LOCAL_TESTING_CHECKLIST.md)
 - [System architecture](docs/SYSTEM_ARCHITECTURE.md)
 - [Staff and administrator guide](docs/ADMIN_USER_GUIDE.md)
 - [Client portal guide](docs/CLIENT_USER_GUIDE.md)
