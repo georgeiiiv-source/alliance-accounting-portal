@@ -49,6 +49,12 @@ Open `http://localhost:3000`.
 
 For a plain-language walkthrough covering local setup, cloud accounts, PostgreSQL, AWS S3, Resend, hosting choices, costs, troubleshooting, and launch checks, see the [non-developer deployment guide](docs/DEPLOYMENT_GUIDE.md).
 
+Additional documentation:
+
+- [System architecture](docs/SYSTEM_ARCHITECTURE.md)
+- [Staff and administrator guide](docs/ADMIN_USER_GUIDE.md)
+- [Client portal guide](docs/CLIENT_USER_GUIDE.md)
+
 ## Production deployment
 
 Run `npm run db:deploy` during release, followed by `npm run build` and `npm start`. Configure HTTPS/HSTS at the hosting layer and use a pooled PostgreSQL connection. The initial migration is committed at `prisma/migrations/20260620000000_phase2_initial/migration.sql`.
