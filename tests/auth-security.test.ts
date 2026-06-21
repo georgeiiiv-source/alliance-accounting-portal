@@ -34,10 +34,12 @@ test("local authentication URLs have the correct origin and no duplicate slash",
   const previous = {
     publicUrl: process.env.NEXT_PUBLIC_APP_URL,
     nextAuthUrl: process.env.NEXTAUTH_URL,
+    appUrl: process.env.APP_URL,
     authUrl: process.env.AUTH_URL,
   };
   process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000/";
   process.env.NEXTAUTH_URL = "http://wrong.example";
+  process.env.APP_URL = "http://also-wrong.example";
   delete process.env.AUTH_URL;
   try {
     assert.equal(getAppUrl(), "http://localhost:3000");
@@ -47,6 +49,8 @@ test("local authentication URLs have the correct origin and no duplicate slash",
     else process.env.NEXT_PUBLIC_APP_URL = previous.publicUrl;
     if (previous.nextAuthUrl === undefined) delete process.env.NEXTAUTH_URL;
     else process.env.NEXTAUTH_URL = previous.nextAuthUrl;
+    if (previous.appUrl === undefined) delete process.env.APP_URL;
+    else process.env.APP_URL = previous.appUrl;
     if (previous.authUrl === undefined) delete process.env.AUTH_URL;
     else process.env.AUTH_URL = previous.authUrl;
   }
