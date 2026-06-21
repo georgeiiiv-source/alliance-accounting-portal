@@ -89,11 +89,13 @@ Then open [http://localhost:3000](http://localhost:3000).
 
 ### Create local seed accounts if needed
 
-Add temporary strong values to ignored `.env`:
+Add the guarded fixture values to ignored `.env.local`, or copy them from [Local Seed Users](SEED_USERS.md):
 
 ```text
-SEED_ADMIN_PASSWORD="use-a-unique-test-password"
-SEED_CLIENT_PASSWORD="use-a-different-test-password"
+ALLOW_LOCAL_TEST_SEED="true"
+SEED_ADMIN_PASSWORD="LocalAdmin!2026"
+SEED_STAFF_PASSWORD="LocalStaff!2026"
+SEED_CLIENT_PASSWORD="LocalClient!2026"
 ```
 
 Run:
@@ -105,16 +107,17 @@ npm.cmd run db:seed
 The seed administrator is:
 
 ```text
-admin@allianceaccountant.com
+admin.local@allianceaccountant.test
 ```
 
-The seed client is:
+The seed staff and client are:
 
 ```text
-client@example.com
+staff.local@allianceaccountant.test
+client.local@allianceaccountant.test
 ```
 
-Remove the two seed password lines when finished. Do not use these accounts or passwords in production.
+These public test credentials must never be used in production. Set `ALLOW_LOCAL_TEST_SEED="false"` when finished.
 
 ### Admin login test
 

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { appUrl } from "@/lib/app-url";
 import { notificationEmail, sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     await tx.auditLog.create({ data: { actorId: userId, clientId: userId, action: "AUTH_EMAIL_VERIFIED", entityType: "User", entityId: userId } });
     return updated;
   });
-  await sendEmail(user.email, "Your Alliance Accounting account is ready", notificationEmail("Email verified", "Your secure client portal is ready. You can now sign in.", `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/login`, "Sign in"));
+  await sendEmail(user.email, "Your Alliance Accounting account is ready", notificationEmail("Email verified", "Your secure client portal is ready. You can now sign in.", appUrl("/login"), "Sign in"));
   loginUrl.searchParams.set("verified", "1");
   return NextResponse.redirect(loginUrl);
 }

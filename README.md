@@ -33,7 +33,7 @@ npm.cmd run db:generate
 npm.cmd run db:deploy
 ```
 
-5. Optionally seed development accounts after setting `SEED_ADMIN_PASSWORD` and `SEED_CLIENT_PASSWORD`:
+5. Optionally seed the guarded admin, staff, and client fixtures described in [Local Seed Users](SEED_USERS.md):
 
 ```powershell
 npm.cmd run db:seed
@@ -52,6 +52,7 @@ For a plain-language walkthrough covering local setup, cloud accounts, PostgreSQ
 Additional documentation:
 
 - [Local testing checklist](LOCAL_TESTING_CHECKLIST.md)
+- [Local seed users](SEED_USERS.md)
 - [System architecture](docs/SYSTEM_ARCHITECTURE.md)
 - [Staff and administrator guide](docs/ADMIN_USER_GUIDE.md)
 - [Client portal guide](docs/CLIENT_USER_GUIDE.md)

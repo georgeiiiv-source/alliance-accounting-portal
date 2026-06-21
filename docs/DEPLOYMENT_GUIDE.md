@@ -224,7 +224,9 @@ Environment variables are private settings. Local values go in `.env`; productio
 | `NEXT_PUBLIC_APP_URL` | Required | Exact public HTTPS URL, with no trailing slash; local value is `http://localhost:3000` |
 | `STRIPE_SECRET_KEY` | Future/optional | Stripe secret key when live payments are implemented |
 | `STRIPE_WEBHOOK_SECRET` | Future/optional | Stripe webhook signing secret when live payments are implemented |
+| `ALLOW_LOCAL_TEST_SEED` | Local testing only | Must be `true` before the guarded seed runs; never enable in production |
 | `SEED_ADMIN_PASSWORD` | Development only | Temporary strong password used only by `db:seed` |
+| `SEED_STAFF_PASSWORD` | Development only | Temporary strong password used only by `db:seed` |
 | `SEED_CLIENT_PASSWORD` | Development only | Temporary strong password used only by `db:seed` |
 
 Do not change `DATA_ENCRYPTION_KEY` after encrypted records exist unless a planned key-rotation process re-encrypts the data. Losing this key makes encrypted messages and request details unreadable.
@@ -370,4 +372,3 @@ When reporting an error, remove passwords, API keys, database URLs, access token
 6. Connect the public domain and re-test every workflow.
 7. Invite a small pilot group before opening general registration.
 8. Review logs, email delivery, costs, backups, and alerts daily during the first week.
-
