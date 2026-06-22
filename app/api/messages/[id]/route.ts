@@ -26,10 +26,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
+  if (!session?.user) return jsonError("Unauthorized", 401);
   if (!isStaff(session)) return jsonError("Forbidden", 403);
   const { id } = await params;
   const parsed = z.object({ status: z.enum(["OPEN", "PENDING", "RESOLVED"]) }).safeParse(await request.json());
   if (!parsed.success) return jsonError("Invalid status");
-  const thread = await prisma.messageThread.update({ where: { id }, data: { status: parsed.data.status } }).catch(() => null);
+  const thread = await prisma.messageThread.update({ where: { id }, data: { status: parsed.data.status }, select: { id: true, clientId: true, subject: true, status: true, createdAt: true, updatedAt: true } }).catch(() => null);
   return thread ? NextResponse.json(thread) : jsonError("Not found", 404);
 }
